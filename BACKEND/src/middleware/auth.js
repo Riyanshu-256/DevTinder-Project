@@ -3,23 +3,24 @@ const User = require("../models/user");
 
 const userAuth = async (req, res, next) => {
   try {
-    const { token } = req.cookies;
+    const token = req.cookies?.token;
 
     if (!token) {
-      throw new Error("Token not found");
+      return res.status(401).json({ message: "Token missing" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded._id);
+
+    const user = await User.findById(decoded._id).select("-password");
 
     if (!user) {
-      throw new Error("User not found");
+      return res.status(401).json({ message: "User not found" });
     }
 
     req.user = user;
     next();
   } catch (err) {
-    res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 

@@ -21,7 +21,6 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 // PROFILE EDIT ROUTE (JWT Protected)
 profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
-
     if (!validateEditProfileData(req)) {
       throw new Error("Invalid edit request");
     }
@@ -38,7 +37,6 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
       message: `${loggedInUser.firstName}, your profile updated successfully`,
       data: loggedInUser,
     });
-
   } catch (err) {
     res.status(400).send("ERROR : " + err.message);
   }
