@@ -1,89 +1,102 @@
-// create a express router
+// Import express to create router
 const express = require("express");
 
-// create authRouter => This router will handle user auth routes like signup and login
+// Create router instance for authentication routes
 const authRouter = express.Router();
 
-// To connect validation
+// Import signup validation function
 const { validateSignUpData } = require("../utils/validation");
 
-// To connect user model
+// Import User model (MongoDB schema)
 const User = require("../models/user");
 
-// importing bcrypt library for hashing passwords
+// Import bcrypt for password hashing
 const bcrypt = require("bcrypt");
 
-// import jwt token
-const jwt = require("jsonwebtoken");
-const { userAuth } = require("../middleware/auth");
-
-// SIGNUP
+// =======================
+// SIGNUP ROUTE
+// =======================
 authRouter.post("/signup", async (req, res) => {
-    try {
-        // VALIDATION OF DATA 
-        validateSignUpData(req);
-        const { firstName, lastName, emailId, password } = req.body;
+  try {
+    // Validate incoming signup data
+    validateSignUpData(req);
 
-        // ENCRYPT THE PASSWORD
-        const passwordHash = await bcrypt.hash(password, 10);
+    // Destructure user data from request body
+    const { firstName, lastName, emailId, password } = req.body;
 
-        // Store the data
-        const user = new User({
-            firstName,
-            lastName,
-            emailId,
-            password: passwordHash,
-        });
+    // Hash the password before saving to DB
+    const passwordHash = await bcrypt.hash(password, 10);
 
-        await user.save();
-        res.send("User added successfully!!!");
-    } catch (err) {
-        res.status(401).send("ERROR :" + err.message);
-    }
-});
-
-// LOGIN ROUTE
-authRouter.post("/login", async (req, res) => {
-    try {
-        const { emailId, password } = req.body;
-
-        const user = await User.findOne({ emailId });
-        if (!user) {
-            return res.status(401).send("Invalid email or password");
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).send("Invalid email or password");
-        }
-
-        // token generate
-        const token = await user.getJWT();
-
-        // ADD THIS PART ↓↓↓
-        res.cookie("token", token, {
-            httpOnly: true,
-            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        });
-        // ↑↑↑ VERY IMPORTANT
-
-        res.status(200).json({
-            message: "Login Successfully!!",
-            token,
-        });
-    } catch (err) {
-        res.status(500).send("ERROR: " + err.message);
-    }
-});
-
-
-
-// LOGOUT: Remove the token cookie immediately to log the user out
-authRouter.post("/logout", async (req, res) => {
-    res.cookie("token", null, {
-        expires: new Date(Date.now()),
+    // Create new user instance
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
     });
-    res.send("Logout successful");
+
+    // Save user to database
+    await user.save();
+
+    // Send success response
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    // Handle validation or DB errors
+    res.status(400).json({ error: err.message });
+  }
 });
 
-module.exports =  authRouter;
+// =======================
+// LOGIN ROUTE
+// =======================
+authRouter.post("/login", async (req, res) => {
+  try {
+    // Get login credentials from request body
+    const { emailId, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Compare entered password with hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Generate JWT token using model method
+    const token = await user.getJWT();
+
+    // Store token in HTTP-only cookie (secure from JS access)
+    res.cookie("token", token, {
+      httpOnly: true, // Prevent XSS attacks
+      sameSite: "lax", // Required for CORS cookies
+      secure: false, // true only in production (HTTPS)
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
+
+    // Send login success response
+    res.status(200).json(user);
+  } catch (err) {
+    // Handle server errors
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =======================
+// LOGOUT ROUTE
+// =======================
+authRouter.post("/logout", (req, res) => {
+  // Clear token cookie immediately
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+  });
+
+  // Send logout confirmation
+  res.json({ message: "Logout successful" });
+});
+
+// Export router to use in app.js
+module.exports = authRouter;
