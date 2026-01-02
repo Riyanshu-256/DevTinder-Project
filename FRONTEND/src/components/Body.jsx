@@ -14,7 +14,7 @@ const Body = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get({ BASE_URL } + "/profile/view", {
+      const res = await axios.get(BASE_URL + "/profile/view", {
         withCredentials: true,
       });
 
@@ -22,7 +22,6 @@ const Body = () => {
     } catch (err) {
       dispatch(removeUser());
 
-      // ✅ redirect only if not already on login/signup
       if (location.pathname !== "/login" && location.pathname !== "/signup") {
         navigate("/login");
       }
@@ -30,9 +29,12 @@ const Body = () => {
   };
 
   useEffect(() => {
-    fetchUser();
+    // Only try to fetch the logged-in user when we are NOT on auth pages
+    if (location.pathname !== "/login" && location.pathname !== "/signup") {
+      fetchUser();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.pathname]);
 
   return (
     <>

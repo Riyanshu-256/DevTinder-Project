@@ -56,12 +56,11 @@ userSchema.methods.getJWT = async function () {
     // 'this' refers to the current user document
     const user = this;
 
-    // Creating a JWT token containing the user's ID
-    // "DEV@Tinder$790" is the secret key used to sign the token
-    // Token will expire in 7 days
-    const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790", {
-        expiresIn: "10d",
-    });
+// Creating a JWT token containing the user's ID
+// Use the same secret as in auth middleware (JWT_SECRET from .env)
+const token = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "10d",
+});
 
     // Returning the created token
     return token;
