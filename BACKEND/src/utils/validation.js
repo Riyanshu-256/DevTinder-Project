@@ -1,37 +1,34 @@
-const validator = require("validator");
+const validateEditProfiledata = (req) => {
+  const allowedFields = [
+    "firstName",
+    "lastName",
+    "photoUrl",
+    "age",
+    "gender",
+    "about",
+    "skills",
+  ];
 
-// VALIDATION OF SIGNUP DATA
-const validateSignUpData = (req) => {
-    const { firstName, lastName, emailId, password } = req.body;
+  const isEditAllowed = Object.keys(req.body).every((field) =>
+    allowedFields.includes(field)
+  );
 
-    if (!firstName || !lastName) {
-        throw new Error("Name is not valid!");
-    }
-    if (!validator.isEmail(emailId)) {
-        throw new Error("Email is not valid!");
-    }
-    if (!validator.isStrongPassword(password)) {
-        throw new Error("Please enter a strong password!");
-    }
+  if (!isEditAllowed) {
+    throw new Error("Invalid fields in profile update");
+  }
 
-    return true;
+  if (req.body.age && req.body.age < 18) {
+    throw new Error("Age must be at least 18");
+  }
+
+  if (
+    req.body.gender &&
+    !["Male", "Female", "Other"].includes(req.body.gender)
+  ) {
+    throw new Error("Invalid gender value");
+  }
+
+  return true;
 };
 
-// VALIDATE EDIT PROFILE DATA
-const validateEditProfileData = (req) => {
-    const allowedEditFields = [
-        "firstName", "lastName", "emailId", "photoUrl",
-        "gender", "age", "about", "skills"
-    ];
-
-    const isEditAllowed = Object.keys(req.body).every((field) =>
-        allowedEditFields.includes(field)
-    );
-
-    return isEditAllowed;
-};
-
-module.exports = {
-    validateSignUpData,
-    validateEditProfileData,
-};
+module.exports = { validateEditProfiledata };

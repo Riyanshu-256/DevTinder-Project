@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: {
         // enum : {} => restricted for some values
-        values: ["male", "female", "others"],
+        values: ["Male", "Female", "Others"],
       },
     },
     photoUrl: {
