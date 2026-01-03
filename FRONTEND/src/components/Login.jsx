@@ -8,8 +8,8 @@ import { BASE_URL } from "../utils/constants";
 const Login = () => {
   const navigate = useNavigate();
 
-  const [emailId, setEmailId] = useState("anjali.sharma@gmail.com");
-  const [password, setPassword] = useState("Anjali@2025");
+  const [emailId, setEmailId] = useState("riyanshusharma123@gmail.com");
+  const [password, setPassword] = useState("Riyanshu@123");
   const [error, setError] = useState("");
 
   // store data in redux store

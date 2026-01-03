@@ -22,7 +22,8 @@ authRouter.post("/signup", async (req, res) => {
     validateSignUpData(req);
 
     // Destructure user data from request body
-    const { firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password, photoUrl, skills } =
+      req.body;
 
     // Hash the password before saving to DB
     const passwordHash = await bcrypt.hash(password, 10);
@@ -33,6 +34,8 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       emailId,
       password: passwordHash,
+      photoUrl,
+      skills,
     });
 
     // Save user to database
@@ -74,7 +77,7 @@ authRouter.post("/login", async (req, res) => {
       httpOnly: true, // Prevent XSS attacks
       sameSite: "lax", // Required for CORS cookies
       secure: false, // true only in production (HTTPS)
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       path: "/",
     });
 

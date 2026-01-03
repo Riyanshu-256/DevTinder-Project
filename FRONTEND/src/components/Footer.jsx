@@ -3,7 +3,7 @@ import logo from "../assets/logo.png";
 const Footer = () => {
   return (
     <footer className="bg-base-300 border-t border-base-content/10">
-      <div className="max-w-7xl mx-auto px-6 py-12 grid gap-10 md:grid-cols-4">
+      <div className="max-w-7xl mx-auto px-6 py-12 grid gap-10 md:grid-cols-4 bottom-0">
         {/* Brand Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">

@@ -29,7 +29,6 @@ const Body = () => {
   };
 
   useEffect(() => {
-    // Only try to fetch the logged-in user when we are NOT on auth pages
     if (location.pathname !== "/login" && location.pathname !== "/signup") {
       fetchUser();
     }
@@ -37,11 +36,18 @@ const Body = () => {
   }, [location.pathname]);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
+      {/* Navbar */}
       <NavBar />
-      <Outlet />
+
+      {/* Main Content */}
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+
+      {/* Footer */}
       <Footer />
-    </>
+    </div>
   );
 };
 
