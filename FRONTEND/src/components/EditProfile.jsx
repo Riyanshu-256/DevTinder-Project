@@ -1,54 +1,52 @@
-// FILE: src/components/EditProfile.jsx
-// UPDATED to fully match backend USER_SAFE_DATA
-// FIXES: age Number, correct Redux update, clean form sync
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
 
+/* 🔐 Cloudinary Config */
+const CLOUD_NAME = "YOUR_CLOUD_NAME";
+const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET";
+
 const EditProfile = () => {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch();
 
-  // 🔹 FIX: Form keys exactly match backend schema
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    age: 18, // FIX: default number (Mongo expects Number)
+    age: 18,
     gender: "",
     about: "",
     skills: [],
+    photoUrl: "",
   });
 
   const [skillInput, setSkillInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  /* 🔹 Prefill data from Redux */
+  /* 🔹 Prefill from Redux */
   useEffect(() => {
     if (!user) return;
 
     setForm({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      age: user.age ?? 18, // FIX: fallback number
+      age: user.age ?? 18,
       gender: user.gender || "",
       about: user.about || "",
       skills: user.skills || [],
+      photoUrl: user.photoUrl || "",
     });
   }, [user]);
 
-  /* 🔹 Generic field update */
   const updateField = (key, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  /* 🔹 Skill handlers */
+  /* 🔹 Skills */
   const addSkill = () => {
     const value = skillInput.trim();
     if (!value || form.skills.includes(value)) return;
@@ -67,44 +65,93 @@ const EditProfile = () => {
     }));
   };
 
-  /* 🔹 Save profile */
+  /* 🔹 Avatar Upload */
+  const uploadAvatar = async (file) => {
+    if (!file) return;
+
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", UPLOAD_PRESET);
+
+    try {
+      setUploading(true);
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: "POST", body: data }
+      );
+      const result = await res.json();
+      updateField("photoUrl", result.secure_url);
+    } catch {
+      alert("Image upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /* 🔹 Save */
   const saveProfile = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // FIX: Send form exactly as backend expects
       const res = await axios.patch(`${BASE_URL}/profile/edit`, form, {
         withCredentials: true,
       });
 
-      // FIX: Backend returns { data: user }
       dispatch(addUser(res.data.data));
     } catch (err) {
-      setError(err.response?.data || "Failed to update profile");
+      setError(err.response?.data || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-base-200 flex justify-center pt-16 px-4">
-      <div className="w-full max-w-xl bg-base-300 rounded-xl shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-6">Edit Profile</h2>
+    <div className="min-h-[calc(100vh-80px)] bg-base-200 px-4 py-10">
+      <div className="max-w-3xl mx-auto bg-base-100 rounded-xl shadow-lg p-6">
+        {/* <h2 className="text-xl font-semibold mb-6">Edit Profile</h2> */}
 
-        {/* Error */}
-        {error && <p className="text-error text-sm mb-4">{error}</p>}
+        <h1 className="text-3xl font-bold tracking-tight text-center">
+          Edit Your Profile
+        </h1>
+
+        {error && <p className="text-error mb-4">{error}</p>}
+
+        {/* Avatar */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="avatar">
+            <div className="w-20 rounded-full ring ring-primary ring-offset-2">
+              <img
+                src={
+                  form.photoUrl ||
+                  "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+                }
+                alt="avatar"
+              />
+            </div>
+          </div>
+
+          <label className="btn btn-outline btn-sm">
+            {uploading ? "Uploading..." : "Change Avatar"}
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={(e) => uploadAvatar(e.target.files[0])}
+            />
+          </label>
+        </div>
 
         {/* Name */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <input
-            className="input input-bordered w-full"
+            className="input input-bordered"
             placeholder="First Name"
             value={form.firstName}
             onChange={(e) => updateField("firstName", e.target.value)}
           />
           <input
-            className="input input-bordered w-full"
+            className="input input-bordered"
             placeholder="Last Name"
             value={form.lastName}
             onChange={(e) => updateField("lastName", e.target.value)}
@@ -116,44 +163,36 @@ const EditProfile = () => {
           <input
             type="number"
             min={18}
-            className="input input-bordered w-full"
+            className="input input-bordered"
             placeholder="Age"
             value={form.age}
-            // FIX: Convert string → Number (Mongo expects Number)
             onChange={(e) => updateField("age", Number(e.target.value))}
           />
           <select
-            className="select select-bordered w-full"
+            className="select select-bordered"
             value={form.gender}
             onChange={(e) => updateField("gender", e.target.value)}
           >
             <option value="">Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
           </select>
         </div>
 
         {/* Skills */}
         <div className="mb-4">
-          <label className="text-sm font-medium block mb-1">Tech Stack</label>
-
-          <div className="flex gap-2">
+          <label className="text-sm font-medium">Tech Stack</label>
+          <div className="flex gap-2 mt-1">
             <input
               className="input input-bordered flex-1"
               placeholder="React, Java, DSA..."
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addSkill();
-                }
-              }}
+              onKeyDown={(e) => e.key === "Enter" && addSkill()}
             />
             <button
-              className="btn btn-primary"
-              type="button"
+              className="btn w-14 btn-primary btn-sm rounded-md"
               onClick={addSkill}
             >
               Add
@@ -164,29 +203,21 @@ const EditProfile = () => {
             {form.skills.map((skill) => (
               <span key={skill} className="badge badge-neutral gap-2">
                 {skill}
-                <button
-                  className="text-error"
-                  onClick={() => removeSkill(skill)}
-                >
-                  ✕
-                </button>
+                <button onClick={() => removeSkill(skill)}>✕</button>
               </span>
             ))}
           </div>
         </div>
 
         {/* About */}
-        <div className="mb-6">
-          <textarea
-            className="textarea textarea-bordered w-full"
-            rows={4}
-            placeholder="Tell something about yourself..."
-            value={form.about}
-            onChange={(e) => updateField("about", e.target.value)}
-          />
-        </div>
+        <textarea
+          className="textarea textarea-bordered w-full mb-5"
+          rows={3}
+          placeholder="Tell something about yourself..."
+          value={form.about}
+          onChange={(e) => updateField("about", e.target.value)}
+        />
 
-        {/* Save */}
         <button
           className="btn btn-primary w-full"
           onClick={saveProfile}

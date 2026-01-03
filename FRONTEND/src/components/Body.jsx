@@ -7,6 +7,8 @@ import { useDispatch } from "react-redux";
 import { addUser, removeUser } from "../utils/userSlice";
 import { useEffect } from "react";
 
+const PUBLIC_ROUTES = ["/", "/login", "/signup"];
+
 const Body = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -14,22 +16,20 @@ const Body = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(BASE_URL + "/profile", {
+      const res = await axios.get(`${BASE_URL}/profile`, {
         withCredentials: true,
       });
 
       dispatch(addUser(res.data));
     } catch (err) {
       dispatch(removeUser());
-
-      if (location.pathname !== "/login" && location.pathname !== "/signup") {
-        navigate("/login");
-      }
+      navigate("/login", { replace: true });
     }
   };
 
   useEffect(() => {
-    if (location.pathname !== "/login" && location.pathname !== "/signup") {
+    // Only protect non-public routes
+    if (!PUBLIC_ROUTES.includes(location.pathname)) {
       fetchUser();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,7 +40,7 @@ const Body = () => {
       {/* Navbar */}
       <NavBar />
 
-      {/* Main Content */}
+      {/* Page Content */}
       <main className="flex-grow">
         <Outlet />
       </main>
