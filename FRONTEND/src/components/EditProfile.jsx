@@ -1,3 +1,7 @@
+// FILE: src/components/EditProfile.jsx
+// UPDATED to fully match backend USER_SAFE_DATA
+// FIXES: age Number, correct Redux update, clean form sync
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
@@ -8,10 +12,11 @@ const EditProfile = () => {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch();
 
+  // 🔹 FIX: Form keys exactly match backend schema
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    age: "",
+    age: 18, // FIX: default number (Mongo expects Number)
     gender: "",
     about: "",
     skills: [],
@@ -21,26 +26,29 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* Prefill data from Redux */
+  /* 🔹 Prefill data from Redux */
   useEffect(() => {
     if (!user) return;
 
     setForm({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      age: user.age || "",
+      age: user.age ?? 18, // FIX: fallback number
       gender: user.gender || "",
       about: user.about || "",
       skills: user.skills || [],
     });
   }, [user]);
 
-  /* Generic field update */
+  /* 🔹 Generic field update */
   const updateField = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
-  /* Skill handlers */
+  /* 🔹 Skill handlers */
   const addSkill = () => {
     const value = skillInput.trim();
     if (!value || form.skills.includes(value)) return;
@@ -59,19 +67,21 @@ const EditProfile = () => {
     }));
   };
 
-  /* Save profile */
+  /* 🔹 Save profile */
   const saveProfile = async () => {
     try {
       setLoading(true);
       setError("");
 
+      // FIX: Send form exactly as backend expects
       const res = await axios.patch(`${BASE_URL}/profile/edit`, form, {
         withCredentials: true,
       });
 
-      dispatch(addUser(res.data?.data));
+      // FIX: Backend returns { data: user }
+      dispatch(addUser(res.data.data));
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile");
+      setError(err.response?.data || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -105,10 +115,12 @@ const EditProfile = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <input
             type="number"
+            min={18}
             className="input input-bordered w-full"
             placeholder="Age"
             value={form.age}
-            onChange={(e) => updateField("age", e.target.value)}
+            // FIX: Convert string → Number (Mongo expects Number)
+            onChange={(e) => updateField("age", Number(e.target.value))}
           />
           <select
             className="select select-bordered w-full"
