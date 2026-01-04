@@ -11,7 +11,10 @@ require("dotenv").config({
 const app = express();
 
 /* ================== CORS CONFIG ================== */
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  ...(process.env.FRONTEND_URI ? process.env.FRONTEND_URI.split(",") : []),
+].filter(Boolean);
 
 app.use(
   cors({
@@ -42,5 +45,13 @@ connectDB();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
 });
+
+/* =======================
+   VERCEL SERVERLESS EXPORT
+======================= */
+module.exports = async (req, res) => {
+  await connectDB();
+  return app(req, res);
+};
