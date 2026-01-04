@@ -18,22 +18,18 @@ requestRouter.post(
 
       const allowedStatus = ["ignored", "interested"];
       if (!allowedStatus.includes(status)) {
-        return res.status(400).json({
-          message: "Invalid status type",
-        });
+        return res.status(400).json({ message: "Invalid status type" });
       }
 
       if (fromUserId.toString() === toUserId) {
-        return res.status(400).json({
-          message: "You cannot send request to yourself",
-        });
+        return res
+          .status(400)
+          .json({ message: "You cannot send request to yourself" });
       }
 
       const toUser = await User.findById(toUserId);
       if (!toUser) {
-        return res.status(404).json({
-          message: "User not found",
-        });
+        return res.status(404).json({ message: "User not found" });
       }
 
       const existingRequest = await ConnectionRequest.findOne({
@@ -44,25 +40,23 @@ requestRouter.post(
       });
 
       if (existingRequest) {
-        return res.status(400).json({
-          message: "Connection request already exists",
-        });
+        return res
+          .status(400)
+          .json({ message: "Connection request already exists" });
       }
 
-      const connectionRequest = new ConnectionRequest({
+      const connectionRequest = await ConnectionRequest.create({
         fromUserId,
         toUserId,
         status,
       });
 
-      const data = await connectionRequest.save();
-
-      res.json({
+      res.status(200).json({
         message: `Request ${status} successfully`,
-        data,
+        data: connectionRequest,
       });
     } catch (err) {
-      res.status(400).json({ message: err.message });
+      res.status(500).json({ message: err.message });
     }
   }
 );
@@ -135,5 +129,42 @@ requestRouter.post(
     }
   }
 );
+
+/* =====================================================
+   GET ACCEPTED CONNECTIONS (NEW + REQUIRED)
+   GET /user/connections
+===================================================== */
+requestRouter.get("/user/connections", userAuth, async (req, res) => {
+  try {
+    const loggedInUserId = req.user._id;
+
+    const connections = await ConnectionRequest.find({
+      status: "accepted",
+      $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+    })
+      .populate(
+        "fromUserId",
+        "firstName lastName photoUrl age gender skills about"
+      )
+      .populate(
+        "toUserId",
+        "firstName lastName photoUrl age gender skills about"
+      );
+
+    // return only the OTHER user
+    const users = connections.map((req) =>
+      req.fromUserId._id.toString() === loggedInUserId.toString()
+        ? req.toUserId
+        : req.fromUserId
+    );
+
+    res.json({
+      message: "Connections fetched successfully",
+      data: users,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 module.exports = requestRouter;
