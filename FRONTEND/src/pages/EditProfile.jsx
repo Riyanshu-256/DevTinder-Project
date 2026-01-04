@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { BASE_URL } from "../utils/constants";
-import { addUser } from "../utils/userSlice";
+import { addUser } from "../store/slices/userSlice";
 
 /* 🔐 Cloudinary Config */
 const CLOUD_NAME = "YOUR_CLOUD_NAME";

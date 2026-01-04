@@ -3,9 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { addConnections } from "../utils/connectionSlice";
-import { SkeletonConnectionCard } from "./Skeleton";
-
+import { addConnections } from "../store/slices/connectionSlice";
+import { SkeletonConnectionCard } from "../components/common/Skeleton";
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 const Connections = () => {

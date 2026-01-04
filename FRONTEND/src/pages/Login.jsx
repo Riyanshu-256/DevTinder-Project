@@ -3,7 +3,7 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import { addUser } from "../utils/userSlice";
+import { addUser } from "../store/slices/userSlice";
 import { BASE_URL } from "../utils/constants";
 import logo from "../assets/logo.png";
 

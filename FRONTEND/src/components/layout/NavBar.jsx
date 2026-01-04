@@ -2,9 +2,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import axios from "axios";
-import { removeUser } from "../utils/userSlice";
-import { BASE_URL } from "../utils/constants";
-import logo from "../assets/logo.png";
+import { removeUser } from "../../store/slices/userSlice";
+import { BASE_URL } from "../../utils/constants";
+import logo from "../../assets/logo.png";
 
 const NavBar = () => {
   const navigate = useNavigate();
